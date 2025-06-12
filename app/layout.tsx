@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cairo } from 'next/font/google';
+import { Suspense } from 'react';
 
 const cairo = Cairo({
   subsets: ['arabic'],
@@ -32,7 +33,9 @@ export default function RootLayout({
 
       </head>
       <body className={`${cairo.className} antialiased`}>
-        {children}
+        <Suspense fallback={<div>Loading...</div>}>
+          {children}
+        </Suspense>
       </body>
     </html>
   );
