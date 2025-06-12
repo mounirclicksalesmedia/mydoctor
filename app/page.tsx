@@ -45,7 +45,20 @@ export default function HomePage() {
     return `${base}?${params.join('&')}`;
   }, [searchParams]);
 
-  const handleWhatsAppClick = (message: string) => () => {
+  const handleWhatsAppClick = (message: string) => (event: React.MouseEvent) => {
+    event.preventDefault();
+    
+    // Get the WhatsApp URL
+    const whatsappUrl = buildWhatsAppUrl(message);
+    
+    // Track Google Ads conversion and navigate
+    if (typeof window !== 'undefined' && (window as any).gtag_report_conversion) {
+      (window as any).gtag_report_conversion(whatsappUrl);
+    } else {
+      // Fallback: navigate directly if conversion tracking fails
+      window.location.href = whatsappUrl;
+    }
+    
     // Track WhatsApp click events for analytics
     if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('event', 'whatsapp_click', {
@@ -63,8 +76,7 @@ export default function HomePage() {
       });
     }
     
-    // You can add other tracking services here (AdWords, etc.)
-    console.log('WhatsApp click tracked:', message);
+    console.log('WhatsApp click tracked with conversion:', message);
   };
 
   // Add scroll animations

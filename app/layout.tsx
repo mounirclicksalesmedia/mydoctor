@@ -34,6 +34,25 @@ export default function RootLayout({
             `,
           }}
         />
+        {/* Event snippet for WhatsappClickButton conversion tracking */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              function gtag_report_conversion(url) {
+                var callback = function () {
+                  if (typeof(url) != 'undefined') {
+                    window.location = url;
+                  }
+                };
+                gtag('event', 'conversion', {
+                    'send_to': 'AW-17138098917/IROQCIic9dgaEOXFiuw_',
+                    'event_callback': callback
+                });
+                return false;
+              }
+            `,
+          }}
+        />
         <link
           href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
           rel="stylesheet"
