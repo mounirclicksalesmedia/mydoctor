@@ -18,7 +18,7 @@ export default function HomePage() {
 
   // WhatsApp utility functions with UTM parameter tracking
   const buildWhatsAppUrl = useCallback((message: string) => {
-    const base = 'https://wa.me/+96599196069';
+    const base = 'https://wa.me/+96555200604';
     const text = encodeURIComponent(message);
 
     // grab all the parameters we care about
