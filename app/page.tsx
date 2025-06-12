@@ -1330,7 +1330,7 @@ export default function HomePage() {
                   { icon: "fas fa-map-marker-alt", text: "السالمية، بلوك 6، شارع 8، الكويت" },
                   { icon: "fas fa-phone-alt", text: "+965 9919 6069" },
                   { icon: "fas fa-envelope", text: "info@mdckuwait.com" },
-                  { icon: "fas fa-clock", text: "9:00 صباحاً - 9:00 مساءً" }
+                  { icon: "fas fa-clock", text: "9:00 الظهر - 12:00 مساءً" }
                 ].map((contact, index) => (
                   <p key={index} className="flex items-start">
                     <i className={`${contact.icon} ml-3 mt-1`} />
