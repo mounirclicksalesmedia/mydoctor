@@ -1150,7 +1150,7 @@ export default function HomePage() {
                 <i className="fas fa-phone-alt text-blue-600 text-xl"></i>
               </div>
                              <h4 className="font-bold text-gray-800 mb-2">اتصل مباشرة</h4>
-               <p className="text-gray-600">+965 9919 6069</p>
+               <p className="text-gray-600">+965 5520 0604</p>
             </div>
             
             <div className="text-center">
@@ -1329,7 +1329,7 @@ export default function HomePage() {
           <div className="space-y-4">
                 {[
                   { icon: "fas fa-map-marker-alt", text: "السالمية، بلوك 6، شارع 8، الكويت" },
-                  { icon: "fas fa-phone-alt", text: "+965 9919 6069" },
+                  { icon: "fas fa-phone-alt", text: "+965 5520 0604" },
                   { icon: "fas fa-envelope", text: "info@mdckuwait.com" },
                   { icon: "fas fa-clock", text: "9:00 الظهر - 12:00 مساءً" }
                 ].map((contact, index) => (
