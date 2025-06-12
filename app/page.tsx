@@ -475,6 +475,11 @@ export default function HomePage() {
             right: 15px;
           }
         }
+        
+        .direction-ltr {
+          direction: ltr;
+          text-align: left;
+        }
       `}</style>
 
   <header className="relative bg-white shadow-md z-10">
@@ -1330,12 +1335,12 @@ export default function HomePage() {
                 {[
                   { icon: "fas fa-map-marker-alt", text: "السالمية، بلوك 6، شارع 8، الكويت" },
                   { icon: "fas fa-phone-alt", text: "+965 5520 0604" },
-                  { icon: "fas fa-envelope", text: "info@mdckuwait.com" },
-                  { icon: "fas fa-clock", text: "9:00 الظهر - 12:00 مساءً" }
+                  { icon: "fas fa-envelope", text: "info@kw.my-doctor-dental.com" },
+                  { icon: "fas fa-clock", text: "12:00 الظهر - 9:00 مساءً" }
                 ].map((contact, index) => (
                   <p key={index} className="flex items-start">
                     <i className={`${contact.icon} ml-3 mt-1`} />
-                    <span>{contact.text}</span>
+                    <span className={contact.icon === "fas fa-phone-alt" ? "direction-ltr" : ""}>{contact.text}</span>
                   </p>
                 ))}
           </div>
