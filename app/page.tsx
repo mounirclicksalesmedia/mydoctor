@@ -7,9 +7,10 @@ import Image from 'next/image';
 // Extend Window interface for tracking scripts
 declare global {
   interface Window {
-    gtag?: (command: string, action: string, parameters?: Record<string, unknown>) => void;
-    fbq?: (command: string, action: string, parameters?: Record<string, unknown>) => void;
-  }
+  gtag?: (command: string, action: string, parameters?: Record<string, unknown>) => void;
+  fbq?: (command: string, action: string, parameters?: Record<string, unknown>) => void;
+  gtag_report_conversion?: (url?: string) => boolean;
+}
 }
 
 export default function HomePage() {
@@ -52,8 +53,8 @@ export default function HomePage() {
     const whatsappUrl = buildWhatsAppUrl(message);
     
     // Track Google Ads conversion and navigate
-    if (typeof window !== 'undefined' && (window as any).gtag_report_conversion) {
-      (window as any).gtag_report_conversion(whatsappUrl);
+    if (typeof window !== 'undefined' && window.gtag_report_conversion) {
+      window.gtag_report_conversion(whatsappUrl);
     } else {
       // Fallback: navigate directly if conversion tracking fails
       window.location.href = whatsappUrl;
