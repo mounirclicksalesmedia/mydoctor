@@ -1,4 +1,11 @@
 import type { Metadata } from "next";
+import { Cairo } from 'next/font/google';
+
+const cairo = Cairo({
+  subsets: ['arabic'],
+  weight: ['300', '400', '500', '600', '700', '800'],
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: "عيادة ماي دكتور لطب الأسنان - رعاية متميزة لابتسامة مثالية",
@@ -22,14 +29,9 @@ export default function RootLayout({
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"
         />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
+
       </head>
-      <body className="antialiased">
+      <body className={`${cairo.className} antialiased`}>
         {children}
       </body>
     </html>

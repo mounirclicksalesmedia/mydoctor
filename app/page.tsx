@@ -1,10 +1,71 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Image from 'next/image';
+
+// Extend Window interface for tracking scripts
+declare global {
+  interface Window {
+    gtag?: (command: string, action: string, parameters?: Record<string, unknown>) => void;
+    fbq?: (command: string, action: string, parameters?: Record<string, unknown>) => void;
+  }
+}
 
 export default function HomePage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeAccordion, setActiveAccordion] = useState<number | null>(null);
+  const searchParams = useSearchParams();
+
+  // WhatsApp utility functions with UTM parameter tracking
+  const buildWhatsAppUrl = useCallback((message: string) => {
+    const base = 'https://wa.me/+96599196069';
+    const text = encodeURIComponent(message);
+
+    // grab all the parameters we care about
+    const utmSource = searchParams.get('utm_source');
+    const utmCampaign = searchParams.get('utm_campaign');
+    const utmMedium = searchParams.get('utm_medium');
+    const utmTerm = searchParams.get('utm_term');
+    const utmContent = searchParams.get('utm_content');
+    const gclid = searchParams.get('gclid');
+    const fbclid = searchParams.get('fbclid');
+
+    // build an array of param strings
+    const params = [
+      `text=${text}`,
+      utmSource && `utm_source=${utmSource}`,
+      utmCampaign && `utm_campaign=${utmCampaign}`,
+      utmMedium && `utm_medium=${utmMedium}`,
+      utmTerm && `utm_term=${utmTerm}`,
+      utmContent && `utm_content=${utmContent}`,
+      gclid && `gclid=${gclid}`,
+      fbclid && `fbclid=${fbclid}`,
+    ].filter(Boolean);  // remove any nulls
+
+    return `${base}?${params.join('&')}`;
+  }, [searchParams]);
+
+  const handleWhatsAppClick = (message: string) => () => {
+    // Track WhatsApp click events for analytics
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'whatsapp_click', {
+        event_category: 'engagement',
+        event_label: message,
+        value: 1
+      });
+    }
+    
+    // Track for Facebook Pixel if available
+    if (typeof window !== 'undefined' && window.fbq) {
+      window.fbq('track', 'Contact', {
+        content_name: 'WhatsApp Click',
+        content_category: 'Contact Form'
+      });
+    }
+    
+    // You can add other tracking services here (AdWords, etc.)
+    console.log('WhatsApp click tracked:', message);
+  };
 
   // Add scroll animations
   useEffect(() => {
@@ -34,10 +95,6 @@ export default function HomePage() {
       observer.disconnect();
     };
   }, []);
-
-  const toggleAccordion = (index: number) => {
-    setActiveAccordion(activeAccordion === index ? null : index);
-  };
 
   return (
     <>
@@ -454,10 +511,11 @@ export default function HomePage() {
       </nav>
       <div className="flex items-center space-x-4 space-x-reverse">
         <a
-              href="https://wa.me/96569069199?text=مرحباً، أريد حجز موعد في عيادة ماي دكتور لطب الأسنان"
+              href={buildWhatsAppUrl("مرحباً، أريد حجز موعد في عيادة ماي دكتور لطب الأسنان")}
               target="_blank"
               rel="noopener noreferrer"
               className="hidden md:block bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full transition duration-300 font-medium pulse-glow flex items-center"
+              onClick={handleWhatsAppClick("مرحباً، أريد حجز موعد في عيادة ماي دكتور لطب الأسنان")}
             >
               <i className="fab fa-whatsapp text-lg ml-1" />
           احجز الآن
@@ -519,10 +577,11 @@ export default function HomePage() {
             </div>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
-                    href="https://wa.me/96569069199?text=مرحباً، أريد حجز موعد في عيادة ماي دكتور لطب الأسنان"
+                    href={buildWhatsAppUrl("مرحباً، أريد حجز موعد في عيادة ماي دكتور لطب الأسنان")}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn-primary text-white font-bold py-3 px-8 rounded-full text-center flex items-center justify-center"
+                    onClick={handleWhatsAppClick("مرحباً، أريد حجز موعد في عيادة ماي دكتور لطب الأسنان")}
                   >
                     <i className="fab fa-whatsapp text-xl ml-2" />
                     احجز موعدك عبر واتساب
@@ -536,20 +595,26 @@ export default function HomePage() {
             </div>
             <div className="mt-8 flex items-center">
               <div className="flex -space-x-2 space-x-reverse mr-3">
-                <img
+                <Image
                   className="w-10 h-10 rounded-full border-2 border-white"
                   src="https://mdckuwait.com/wp-content/uploads/2019/03/mission-1-400x250.jpg"
                   alt="مريض"
+                  width={40}
+                  height={40}
                 />
-                <img
+                <Image
                   className="w-10 h-10 rounded-full border-2 border-white"
                   src="https://mdckuwait.com/wp-content/uploads/2019/03/values-1-400x250.jpg"
                   alt="مريض"
+                  width={40}
+                  height={40}
                 />
-                <img
+                <Image
                   className="w-10 h-10 rounded-full border-2 border-white"
                   src="https://mdckuwait.com/wp-content/uploads/2019/03/history-1-400x250.jpg"
                   alt="مريض"
+                  width={40}
+                  height={40}
                 />
               </div>
               <div>
@@ -570,10 +635,12 @@ export default function HomePage() {
               <div className="w-full md:w-1/2 relative animate-on-scroll">
             <div className="relative z-10">
               <div className="bg-white p-3 rounded-2xl shadow-lg transform rotate-3 floating">
-                <img
-                  src="https://mdckuwait.com/wp-content/uploads/2019/03/history-1-400x250.jpg"
+                <Image
+                  src="/hero.jpg"
                   alt="عيادة أسنان متطورة"
                   className="rounded-xl w-full h-auto"
+                  width={400}
+                  height={250}
                 />
               </div>
               <div
@@ -589,10 +656,12 @@ export default function HomePage() {
                 className="absolute top-10 -left-10 bg-white p-3 rounded-full shadow-lg transform scale-75 floating"
                 style={{ animationDelay: "0.8s" }}
               >
-                <img
+                <Image
                   src="https://mdckuwait.com/wp-content/uploads/2019/03/values-1-400x250.jpg"
                   alt="عيادة أسنان"
                   className="rounded-full w-32 h-32 object-cover"
+                  width={128}
+                  height={128}
                 />
               </div>
             </div>
@@ -682,10 +751,11 @@ export default function HomePage() {
                   {service.description}
                 </p>
                 <a 
-                  href={`https://wa.me/96569069199?text=${encodeURIComponent(service.whatsappText)}`}
+                  href={buildWhatsAppUrl(service.whatsappText)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 font-medium flex items-center transition duration-300 hover:text-blue-800"
+                  onClick={handleWhatsAppClick(service.whatsappText)}
                 >
                   <i className="fab fa-whatsapp text-lg ml-1" />
                   اسأل عبر واتساب
@@ -695,10 +765,11 @@ export default function HomePage() {
           </div>
           <div className="text-center mt-12 animate-on-scroll">
             <a
-              href="https://wa.me/96569069199?text=مرحباً، أريد معرفة المزيد عن خدماتكم في عيادة ماي دكتور"
+              href={buildWhatsAppUrl("مرحباً، أريد معرفة المزيد عن خدماتكم في عيادة ماي دكتور")}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-primary inline-block text-white font-bold py-3 px-8 rounded-full flex items-center justify-center max-w-xs mx-auto"
+              onClick={handleWhatsAppClick("مرحباً، أريد معرفة المزيد عن خدماتكم في عيادة ماي دكتور")}
             >
               <i className="fab fa-whatsapp text-xl ml-2" />
               احجز خدمة عبر واتساب
@@ -720,7 +791,7 @@ export default function HomePage() {
     </div>
   </section>
 
-      {/* Before and After Gallery Section */}
+      {/* Before and After Gallery Section 
       <section id="gallery" className="py-16 bg-blue-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12 animate-on-scroll">
@@ -778,9 +849,15 @@ export default function HomePage() {
                   <span className="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
                     {item.category}
                   </span>
-                  <button className="text-blue-600 hover:text-blue-800 transition duration-300">
-                    <i className="fas fa-eye text-lg"></i>
-                  </button>
+                  <a
+                    href={buildWhatsAppUrl(`مرحباً، أريد استشارة مجانية حول تجميل الأسنان - ${item.title}`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 transition duration-300"
+                    onClick={handleWhatsAppClick(`مرحباً، أريد استشارة مجانية حول تجميل الأسنان - ${item.title}`)}
+                  >
+                    <i className="fas fa-question-circle text-lg"></i>
+                  </a>
                 </div>
               </div>
             ))}
@@ -788,17 +865,18 @@ export default function HomePage() {
 
           <div className="text-center mt-12 animate-on-scroll">
             <a
-              href="https://wa.me/96569069199?text=مرحباً، أريد استشارة مجانية حول تجميل الأسنان"
+              href={buildWhatsAppUrl("مرحباً، أريد استشارة مجانية حول تجميل الأسنان")}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-primary inline-block text-white font-bold py-3 px-8 rounded-full flex items-center justify-center max-w-xs mx-auto"
+              onClick={handleWhatsAppClick("مرحباً، أريد استشارة مجانية حول تجميل الأسنان")}
             >
               <i className="fab fa-whatsapp text-xl ml-2" />
               استشارة مجانية عبر واتساب
             </a>
           </div>
         </div>
-      </section>
+      </section> */}
 
   {/* Why Choose Us Section */}
       <section id="why-us" className="py-16 bg-white relative">
@@ -860,18 +938,21 @@ export default function HomePage() {
               ))}
           </div>
             <div className="relative animate-on-scroll">
-          <img
-            src="https://mdckuwait.com/wp-content/uploads/2019/03/vision-400x250.jpg"
+          <Image
+            src="/doc.jpg"
             alt="تقنيات متطورة لطب الأسنان"
             className="rounded-xl shadow-lg w-full h-auto"
+            width={400}
+            height={250}
           />
           <div className="absolute inset-0 bg-blue-900 bg-opacity-20 rounded-xl" />
           <div className="absolute inset-0 flex items-center justify-center">
             <a
-                  href="https://wa.me/96569069199?text=مرحباً، أريد معرفة المزيد عن التقنيات المتطورة لديكم"
+                  href={buildWhatsAppUrl("مرحباً، أريد معرفة المزيد عن التقنيات المتطورة لديكم")}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-white rounded-full p-4 shadow-lg hover:transform hover:scale-110 transition duration-300 flex items-center justify-center"
+                  onClick={handleWhatsAppClick("مرحباً، أريد معرفة المزيد عن التقنيات المتطورة لديكم")}
                 >
                   <i className="fab fa-whatsapp text-blue-600 text-xl" />
             </a>
@@ -880,10 +961,11 @@ export default function HomePage() {
       </div>
           <div className="text-center mt-12 animate-on-scroll">
             <a
-              href="https://wa.me/96569069199?text=مرحباً، لماذا يجب أن أختار عيادة ماي دكتور؟"
+              href={buildWhatsAppUrl("مرحباً، لماذا يجب أن أختار عيادة ماي دكتور؟")}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-primary inline-block text-white font-bold py-3 px-8 rounded-full flex items-center justify-center max-w-xs mx-auto"
+              onClick={handleWhatsAppClick("مرحباً، لماذا يجب أن أختار عيادة ماي دكتور؟")}
             >
               <i className="fab fa-whatsapp text-xl ml-2" />
               اسأل عبر واتساب
@@ -892,7 +974,8 @@ export default function HomePage() {
     </div>
   </section>
 
-  {/* Testimonials Section */}
+  {/* Testimonials Section - HIDDEN */}
+  {/*
       <section id="testimonials" className="py-16 bg-blue-50 relative">
     <div className="container mx-auto px-4">
           <div className="text-center mb-16 animate-on-scroll">
@@ -945,10 +1028,11 @@ export default function HomePage() {
           </div>
           <div className="text-center mt-12 animate-on-scroll">
             <a
-              href="https://wa.me/96569069199?text=مرحباً، أريد مشاركة تجربتي أو الحصول على استشارة"
+              href={buildWhatsAppUrl("مرحباً، أريد مشاركة تجربتي أو الحصول على استشارة")}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-primary inline-block text-white font-bold py-3 px-8 rounded-full flex items-center justify-center max-w-xs mx-auto"
+              onClick={handleWhatsAppClick("مرحباً، أريد مشاركة تجربتي أو الحصول على استشارة")}
             >
               <i className="fab fa-whatsapp text-xl ml-2" />
               شارك تجربتك عبر واتساب
@@ -956,140 +1040,148 @@ export default function HomePage() {
       </div>
     </div>
   </section>
+  */}
 
-  {/* Appointment Section */}
-      <section id="appointment" className="py-16 bg-white relative">
-    <div className="container mx-auto px-4">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden animate-on-scroll">
-          <div className="bg-blue-600 py-4 px-6">
-            <h3 className="text-2xl font-bold text-white">احجز موعدك الآن</h3>
+  {/* WhatsApp Appointment Section */}
+  <section id="appointment" className="py-20 bg-gradient-to-br from-green-50 to-blue-50 relative overflow-hidden">
+    {/* Background decorative elements */}
+    <div className="absolute top-10 right-10 w-32 h-32 bg-green-100 rounded-full opacity-20 animate-pulse"></div>
+    <div className="absolute bottom-10 left-10 w-24 h-24 bg-blue-100 rounded-full opacity-20 animate-pulse" style={{animationDelay: '1s'}}></div>
+    
+    <div className="container mx-auto px-4 relative z-10">
+      <div className="max-w-4xl mx-auto text-center">
+        {/* Header */}
+        <div className="mb-12 animate-on-scroll">
+          <div className="inline-flex items-center bg-green-100 text-green-700 px-4 py-2 rounded-full mb-6">
+            <i className="fab fa-whatsapp text-xl ml-2"></i>
+            <span className="font-medium">حجز فوري عبر واتساب</span>
           </div>
-          <div className="p-6">
-            <form action="#" method="POST">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label className="block text-gray-700 mb-2">
-                    الاسم الكامل
-                  </label>
-                  <input
-                    type="text"
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                    placeholder="أدخل اسمك الكامل"
-                  />
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6">
+            احجز موعدك <span className="text-green-600">بنقرة واحدة</span>
+          </h2>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            تواصل معنا مباشرة عبر واتساب واحجز موعدك في أقل من دقيقة. فريقنا جاهز للرد عليك فوراً!
+          </p>
+        </div>
+
+        {/* Main WhatsApp Booking Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          {[
+            {
+              icon: "fas fa-calendar-check",
+              title: "حجز موعد عادي",
+              description: "احجز موعدك لفحص دوري أو استشارة عامة",
+              message: "مرحباً، أريد حجز موعد عادي في عيادة ماي دكتور لطب الأسنان",
+              color: "blue",
+              popular: false
+            },
+            {
+              icon: "fas fa-bolt",
+              title: "موعد طارئ",
+              description: "للحالات العاجلة والطارئة - رد سريع",
+              message: "مرحباً، لدي حالة طارئة وأحتاج موعد عاجل في عيادة ماي دكتور",
+              color: "red",
+              popular: true
+            },
+            {
+              icon: "fas fa-user-md",
+              title: "استشارة مجانية",
+              description: "احصل على استشارة أولية مجانية مع أطبائنا",
+              message: "مرحباً، أريد الحصول على استشارة مجانية من عيادة ماي دكتور",
+              color: "green",
+              popular: false
+            }
+          ].map((booking, index) => (
+            <div key={index} className={`relative bg-white rounded-2xl shadow-lg p-6 transform transition-all duration-300 hover:scale-105 hover:shadow-xl animate-on-scroll stagger-animation ${booking.popular ? 'ring-2 ring-green-400' : ''}`} style={{'--stagger': index + 1} as React.CSSProperties}>
+              {booking.popular && (
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <span className="bg-green-500 text-white px-4 py-1 rounded-full text-sm font-bold">الأكثر طلباً</span>
                 </div>
-                <div>
-                  <label className="block text-gray-700 mb-2">رقم الهاتف</label>
-                  <input
-                    type="tel"
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                    placeholder="أدخل رقم هاتفك"
-                  />
-                </div>
+              )}
+              
+              <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${
+                booking.color === 'blue' ? 'bg-blue-100' :
+                booking.color === 'red' ? 'bg-red-100' : 'bg-green-100'
+              }`}>
+                <i className={`${booking.icon} text-2xl ${
+                  booking.color === 'blue' ? 'text-blue-600' :
+                  booking.color === 'red' ? 'text-red-600' : 'text-green-600'
+                }`}></i>
               </div>
-              <div className="mb-6">
-                <label className="block text-gray-700 mb-2">
-                  البريد الإلكتروني
-                </label>
-                <input
-                  type="email"
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                  placeholder="أدخل بريدك الإلكتروني"
-                />
+              
+              <h3 className="text-xl font-bold mb-3 text-gray-800">{booking.title}</h3>
+              <p className="text-gray-600 mb-6 text-sm leading-relaxed">{booking.description}</p>
+              
+              <a
+                href={buildWhatsAppUrl(booking.message)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`w-full py-3 px-6 rounded-xl font-bold text-white transition-all duration-300 flex items-center justify-center transform hover:scale-105 ${
+                  booking.color === 'blue' ? 'bg-blue-600 hover:bg-blue-700' :
+                  booking.color === 'red' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'
+                }`}
+                onClick={handleWhatsAppClick(booking.message)}
+              >
+                <i className="fab fa-whatsapp text-xl ml-2"></i>
+                احجز الآن
+              </a>
+            </div>
+          ))}
+        </div>
+
+        {/* Quick Contact Info */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 animate-on-scroll">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i className="fas fa-phone-alt text-blue-600 text-xl"></i>
               </div>
-              <div className="mb-6">
-                <label className="block text-gray-700 mb-2">نوع الخدمة</label>
-                    <select className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300">
-                  <option value="">اختر الخدمة</option>
-                  <option value="ortho">تقويم الأسنان</option>
-                  <option value="implant">زراعة الأسنان</option>
-                  <option value="cosmetic">تجميل الأسنان</option>
-                  <option value="whitening">تبييض الأسنان</option>
-                  <option value="rootcanal">علاج الجذور</option>
-                  <option value="pediatric">طب أسنان الأطفال</option>
-                </select>
+                             <h4 className="font-bold text-gray-800 mb-2">اتصل مباشرة</h4>
+               <p className="text-gray-600">+965 9919 6069</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i className="fas fa-clock text-green-600 text-xl"></i>
               </div>
-              <div className="mb-6">
-                <label className="block text-gray-700 mb-2">
-                  التاريخ المفضل
-                </label>
-                <input
-                  type="date"
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                />
+              <h4 className="font-bold text-gray-800 mb-2">ساعات العمل</h4>
+              <p className="text-gray-600">9:00 ص - 9:00 م</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i className="fas fa-map-marker-alt text-purple-600 text-xl"></i>
               </div>
-              <div className="mb-6">
-                <label className="block text-gray-700 mb-2">
-                  ملاحظات إضافية
-                </label>
-                <textarea
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                  rows={3}
-                  placeholder="اكتب أي ملاحظات أو استفسارات"
-                  defaultValue={""}
-                />
-              </div>
-                  <a
-                    href="https://wa.me/96569069199?text=مرحباً، أريد حجز موعد في عيادة ماي دكتور لطب الأسنان"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-primary w-full text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center"
-                  >
-                    <i className="fab fa-whatsapp text-xl ml-2" />
-                    احجز عبر واتساب الآن
-                  </a>
-            </form>
+              <h4 className="font-bold text-gray-800 mb-2">الموقع</h4>
+              <p className="text-gray-600">السالمية، الكويت</p>
+            </div>
           </div>
         </div>
-            <div className="flex flex-col justify-center animate-on-scroll">
-          <h2 className="text-3xl font-bold mb-6 text-gray-800">
-            احصل على استشارة مجانية
-          </h2>
-          <p className="text-gray-600 mb-8">
-            نقدم استشارة أولية مجانية لتقييم حالتك وتحديد خطة العلاج المناسبة.
-            فريقنا من الأخصائيين جاهز للإجابة على جميع استفساراتك.
+
+        {/* Main CTA */}
+        <div className="mt-12 animate-on-scroll">
+          <a
+            href={buildWhatsAppUrl("مرحباً، أريد حجز موعد في عيادة ماي دكتور لطب الأسنان")}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 px-8 rounded-2xl text-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl pulse-glow"
+            onClick={handleWhatsAppClick("مرحباً، أريد حجز موعد في عيادة ماي دكتور لطب الأسنان")}
+          >
+            <i className="fab fa-whatsapp text-2xl ml-3"></i>
+            <span>تواصل معنا عبر واتساب الآن</span>
+            <i className="fas fa-arrow-left mr-3"></i>
+          </a>
+          <p className="text-gray-500 mt-4 text-sm">
+            <i className="fas fa-shield-alt ml-1"></i>
+            رد سريع خلال دقائق • خصوصية تامة • خدمة 24/7
           </p>
-              {[
-                { icon: "fas fa-map-marker-alt", title: "العنوان", content: "السالمية، بلوك 6، شارع 8، الكويت" },
-                { icon: "fas fa-phone-alt", title: "اتصل بنا", content: "+965 6906 9199" },
-                { icon: "fas fa-clock", title: "ساعات العمل", content: "من الأحد إلى الخميس: 9:00 صباحاً - 9:00 مساءً" }
-              ].map((item, index) => (
-                <div key={index} className="mb-6">
-            <h4 className="text-xl font-semibold mb-4 flex items-center">
-                    <i className={`${item.icon} text-blue-600 ml-3`} />
-                    {item.title}
-            </h4>
-                  <div className="text-gray-600">
-                    {item.content.split('\n').map((line, i) => (
-                      <p key={i}>{line}</p>
-                    ))}
-          </div>
-          </div>
-              ))}
-          <div className="flex space-x-4 space-x-reverse">
-                {[
-                  { icon: "fab fa-whatsapp", href: "https://wa.me/96569069199", isWhatsapp: true },
-                  { icon: "fab fa-facebook-f", href: "#", isWhatsapp: false },
-                  { icon: "fab fa-instagram", href: "#", isWhatsapp: false },
-                  { icon: "fab fa-linkedin-in", href: "#", isWhatsapp: false }
-                ].map((social, index) => (
-                  <a
-                    key={index}
-                    href={social.href}
-                    target={social.isWhatsapp ? "_blank" : "_self"}
-                    rel={social.isWhatsapp ? "noopener noreferrer" : ""}
-                    className={`bg-white text-blue-900 w-8 h-8 rounded-full flex items-center justify-center transition hover:bg-blue-100 ${social.isWhatsapp ? "transform scale-110 shadow-lg" : ""}`}
-                  >
-                    <i className={social.icon} />
-                  </a>
-                ))}
-          </div>
         </div>
       </div>
     </div>
   </section>
 
-  {/* FAQ Section */}
+  {/* FAQ Section - HIDDEN */}
+  {/*
       <section className="py-16 bg-blue-50 relative">
     <div className="container mx-auto px-4">
           <div className="text-center mb-16 animate-on-scroll">
@@ -1144,6 +1236,7 @@ export default function HomePage() {
       </div>
     </div>
   </section>
+  */}
 
   {/* Footer Section */}
   <footer className="bg-blue-900 text-white py-12">
@@ -1157,7 +1250,12 @@ export default function HomePage() {
           </p>
           <div className="flex space-x-4 space-x-reverse">
                 {[
-                  { icon: "fab fa-whatsapp", href: "https://wa.me/96569069199", isWhatsapp: true },
+                  { 
+                    icon: "fab fa-whatsapp", 
+                    href: buildWhatsAppUrl("مرحباً، أريد التواصل معكم من خلال الموقع"), 
+                    isWhatsapp: true,
+                    message: "مرحباً، أريد التواصل معكم من خلال الموقع"
+                  },
                   { icon: "fab fa-facebook-f", href: "#", isWhatsapp: false },
                   { icon: "fab fa-instagram", href: "#", isWhatsapp: false },
                   { icon: "fab fa-linkedin-in", href: "#", isWhatsapp: false }
@@ -1168,6 +1266,7 @@ export default function HomePage() {
                     target={social.isWhatsapp ? "_blank" : "_self"}
                     rel={social.isWhatsapp ? "noopener noreferrer" : ""}
                     className={`bg-white text-blue-900 w-8 h-8 rounded-full flex items-center justify-center transition hover:bg-blue-100 ${social.isWhatsapp ? "transform scale-110 shadow-lg" : ""}`}
+                    onClick={social.isWhatsapp ? handleWhatsAppClick(social.message || "") : undefined}
                   >
                     <i className={social.icon} />
                   </a>
@@ -1217,7 +1316,7 @@ export default function HomePage() {
           <div className="space-y-4">
                 {[
                   { icon: "fas fa-map-marker-alt", text: "السالمية، بلوك 6، شارع 8، الكويت" },
-                  { icon: "fas fa-phone-alt", text: "+965 6906 9199" },
+                  { icon: "fas fa-phone-alt", text: "+965 9919 6069" },
                   { icon: "fas fa-envelope", text: "info@mdckuwait.com" },
                   { icon: "fas fa-clock", text: "9:00 صباحاً - 9:00 مساءً" }
                 ].map((contact, index) => (
@@ -1238,11 +1337,12 @@ export default function HomePage() {
 
       {/* Floating WhatsApp Button */}
       <a
-        href="https://wa.me/96569069199?text=مرحباً، أريد الاستفسار عن خدمات عيادة ماي دكتور لطب الأسنان"
+        href={buildWhatsAppUrl("مرحباً، أريد الاستفسار عن خدمات عيادة ماي دكتور لطب الأسنان")}
         target="_blank"
         rel="noopener noreferrer"
         className="floating-whatsapp"
         title="تواصل معنا عبر واتساب"
+        onClick={handleWhatsAppClick("مرحباً، أريد الاستفسار عن خدمات عيادة ماي دكتور لطب الأسنان")}
       >
         <i className="fab fa-whatsapp text-white text-2xl" />
       </a>
