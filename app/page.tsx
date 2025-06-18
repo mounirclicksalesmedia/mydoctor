@@ -75,6 +75,13 @@ export default function HomePage() {
         content_name: 'WhatsApp Click',
         content_category: 'Contact Form'
       });
+      
+      // Track custom WhatsApp button click event
+      window.fbq('trackCustom', 'WhatsAppButtonClick', {
+        content_name: message,
+        content_category: 'WhatsApp Engagement',
+        value: 1
+      });
     }
     
     console.log('WhatsApp click tracked with conversion:', message);
