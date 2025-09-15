@@ -760,15 +760,19 @@ export default function HollywoodSmilePage() {
                  onMouseDown={() => setIsDragging(true)}
                  onMouseUp={() => setIsDragging(false)}
                  onMouseLeave={() => setIsDragging(false)}>
-              <img 
+              <Image 
                 src={hollywoodCases[activeBeforeAfter].beforeImage}
                 alt="Before"
                 className="comparison-image"
+                width={400}
+                height={300}
               />
-              <img 
+              <Image 
                 src={hollywoodCases[activeBeforeAfter].afterImage}
                 alt="After"
                 className="comparison-image after"
+                width={400}
+                height={300}
                 style={{ clipPath: `polygon(${sliderPosition}% 0, 100% 0, 100% 100%, ${sliderPosition}% 100%)` }}
               />
               <div className="comparison-slider-line" style={{ left: `${sliderPosition}%` }}>
@@ -809,7 +813,7 @@ export default function HollywoodSmilePage() {
                       <i key={i} className="fas fa-star"></i>
                     ))}
                   </div>
-                  <p className="text-gray-700 italic">"{case_.testimonial}"</p>
+                  <p className="text-gray-700 italic">&quot;{case_.testimonial}&quot;</p>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4 pt-4 border-t">

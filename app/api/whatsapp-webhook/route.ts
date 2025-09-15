@@ -103,6 +103,7 @@ async function trackMessageSent(clickId: string, phoneNumber: string, messageTex
 }
 
 // Example GA4 server-side tracking function
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function sendToGA4(clickId: string, eventName: string) {
   const measurementId = process.env.GA4_MEASUREMENT_ID;
   const apiSecret = process.env.GA4_API_SECRET;
@@ -143,6 +144,7 @@ async function sendToGA4(clickId: string, eventName: string) {
 }
 
 // Example Facebook Conversions API function
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function sendToFacebookConversions(clickId: string, phoneNumber: string) {
   const pixelId = process.env.FACEBOOK_PIXEL_ID;
   const accessToken = process.env.FACEBOOK_CONVERSIONS_API_TOKEN;
