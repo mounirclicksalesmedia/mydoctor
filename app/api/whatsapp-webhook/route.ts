@@ -93,10 +93,8 @@ async function trackMessageSent(clickId: string, phoneNumber: string, messageTex
     // 3. Send to Facebook Conversions API
     // 4. Trigger Google Ads conversion tracking
     
-    // Example: Send to Google Analytics 4
+    // Uncomment these when you're ready to use them:
     // await sendToGA4(clickId, 'whatsapp_message_sent');
-    
-    // Example: Send to Facebook Conversions API
     // await sendToFacebookConversions(clickId, phoneNumber);
     
   } catch (error) {
@@ -155,7 +153,7 @@ async function sendToFacebookConversions(clickId: string, phoneNumber: string) {
   }
   
   // Hash phone number for privacy
-  const crypto = require('crypto');
+  const crypto = await import('crypto');
   const hashedPhone = crypto.createHash('sha256').update(phoneNumber).digest('hex');
   
   const payload = {

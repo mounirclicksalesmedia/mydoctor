@@ -713,10 +713,12 @@ export default function HollywoodSmilePage() {
             
             <div className="relative animate-on-scroll">
               <div className="relative">
-                <img
+                <Image
                   src="https://images.unsplash.com/photo-1609207825181-52d3214556dd?w=800&h=600&fit=crop"
                   alt="Hollywood Smile Result"
                   className="rounded-3xl shadow-2xl w-full"
+                  width={800}
+                  height={600}
                 />
                 <div className="absolute -bottom-6 -right-6 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black p-6 rounded-2xl shadow-xl">
                   <div className="text-3xl font-bold">299 د.ك</div>
