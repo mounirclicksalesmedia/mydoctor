@@ -18,7 +18,7 @@ export default function HomePage() {
   const searchParams = useSearchParams();
 
   // WhatsApp utility functions with UTM parameter tracking
-  const buildWhatsAppUrl = useCallback((message: string) => {
+  const buildWhatsAppUrl = useCallback((message: string, trackingId?: string) => {
     const base = 'https://wa.me/+96555200604';
     const text = encodeURIComponent(message);
 
@@ -41,50 +41,74 @@ export default function HomePage() {
       utmContent && `utm_content=${utmContent}`,
       gclid && `gclid=${gclid}`,
       fbclid && `fbclid=${fbclid}`,
+      trackingId && `click_id=${trackingId}`,
     ].filter(Boolean);  // remove any nulls
 
     return `${base}?${params.join('&')}`;
   }, [searchParams]);
 
-  const handleWhatsAppClick = (message: string) => (event: React.MouseEvent) => {
+  const handleWhatsAppClick = (message: string, useDirectLink = false) => (event: React.MouseEvent) => {
     event.preventDefault();
     
-    // Get the WhatsApp URL
-    const whatsappUrl = buildWhatsAppUrl(message);
+    const clickId = `wa_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
-    // Track Google Ads conversion and navigate
-    if (typeof window !== 'undefined' && window.gtag_report_conversion) {
-      window.gtag_report_conversion(whatsappUrl);
-    } else {
-      // Fallback: navigate directly if conversion tracking fails
-      window.location.href = whatsappUrl;
-    }
-    
-    // Track WhatsApp click events for analytics
+    // Track initial click with unique ID
     if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('event', 'whatsapp_click', {
         event_category: 'engagement',
         event_label: message,
+        click_id: clickId,
         value: 1
       });
     }
     
     // Track for Facebook Pixel if available
     if (typeof window !== 'undefined' && window.fbq) {
-      window.fbq('track', 'Contact', {
+      window.fbq('track', 'InitiateContact', {
         content_name: 'WhatsApp Click',
-        content_category: 'Contact Form'
+        content_category: 'Contact Form',
+        click_id: clickId
       });
       
       // Track custom WhatsApp button click event
       window.fbq('trackCustom', 'WhatsAppButtonClick', {
         content_name: message,
         content_category: 'WhatsApp Engagement',
+        click_id: clickId,
         value: 1
       });
     }
     
-    console.log('WhatsApp click tracked with conversion:', message);
+    if (useDirectLink) {
+      // Direct link for floating button
+      const whatsappUrl = buildWhatsAppUrl(message, clickId);
+      
+      // Track Google Ads conversion and navigate
+      if (typeof window !== 'undefined' && window.gtag_report_conversion) {
+        window.gtag_report_conversion(whatsappUrl);
+      }
+      
+      window.location.href = whatsappUrl;
+    } else {
+      // Use redirect page for enhanced tracking
+      const redirectUrl = `/api/whatsapp-redirect?message=${encodeURIComponent(message)}&click_id=${clickId}`;
+      
+      // Store click data for tracking
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`whatsapp_click_${clickId}`, JSON.stringify({
+          message,
+          timestamp: Date.now(),
+          utm_source: new URLSearchParams(window.location.search).get('utm_source'),
+          utm_campaign: new URLSearchParams(window.location.search).get('utm_campaign'),
+          gclid: new URLSearchParams(window.location.search).get('gclid'),
+          fbclid: new URLSearchParams(window.location.search).get('fbclid')
+        }));
+      }
+      
+      window.location.href = redirectUrl;
+    }
+    
+    console.log('WhatsApp click tracked with ID:', clickId);
   };
 
   // Add scroll animations
@@ -539,7 +563,7 @@ export default function HomePage() {
               href={buildWhatsAppUrl("مرحباً، أريد حجز موعد في عيادة ماي دكتور لطب الأسنان")}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden md:block bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full transition duration-300 font-medium pulse-glow flex items-center"
+              className="hidden md:flex bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full transition duration-300 font-medium pulse-glow items-center"
               onClick={handleWhatsAppClick("مرحباً، أريد حجز موعد في عيادة ماي دكتور لطب الأسنان")}
             >
               <i className="fab fa-whatsapp text-lg ml-1" />
@@ -793,7 +817,7 @@ export default function HomePage() {
               href={buildWhatsAppUrl("مرحباً، أريد معرفة المزيد عن خدماتكم في عيادة ماي دكتور")}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-primary inline-block text-white font-bold py-3 px-8 rounded-full flex items-center justify-center max-w-xs mx-auto"
+              className="btn-primary text-white font-bold py-3 px-8 rounded-full flex items-center justify-center max-w-xs mx-auto"
               onClick={handleWhatsAppClick("مرحباً، أريد معرفة المزيد عن خدماتكم في عيادة ماي دكتور")}
             >
               <i className="fab fa-whatsapp text-xl ml-2" />
@@ -893,7 +917,7 @@ export default function HomePage() {
               href={buildWhatsAppUrl("مرحباً، أريد استشارة مجانية حول تجميل الأسنان")}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-primary inline-block text-white font-bold py-3 px-8 rounded-full flex items-center justify-center max-w-xs mx-auto"
+              className="btn-primary text-white font-bold py-3 px-8 rounded-full flex items-center justify-center max-w-xs mx-auto"
               onClick={handleWhatsAppClick("مرحباً، أريد استشارة مجانية حول تجميل الأسنان")}
             >
               <i className="fab fa-whatsapp text-xl ml-2" />
@@ -989,7 +1013,7 @@ export default function HomePage() {
               href={buildWhatsAppUrl("مرحباً، لماذا يجب أن أختار عيادة ماي دكتور؟")}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-primary inline-block text-white font-bold py-3 px-8 rounded-full flex items-center justify-center max-w-xs mx-auto"
+              className="btn-primary text-white font-bold py-3 px-8 rounded-full flex items-center justify-center max-w-xs mx-auto"
               onClick={handleWhatsAppClick("مرحباً، لماذا يجب أن أختار عيادة ماي دكتور؟")}
             >
               <i className="fab fa-whatsapp text-xl ml-2" />
@@ -1056,7 +1080,7 @@ export default function HomePage() {
               href={buildWhatsAppUrl("مرحباً، أريد مشاركة تجربتي أو الحصول على استشارة")}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-primary inline-block text-white font-bold py-3 px-8 rounded-full flex items-center justify-center max-w-xs mx-auto"
+              className="btn-primary text-white font-bold py-3 px-8 rounded-full flex items-center justify-center max-w-xs mx-auto"
               onClick={handleWhatsAppClick("مرحباً، أريد مشاركة تجربتي أو الحصول على استشارة")}
             >
               <i className="fab fa-whatsapp text-xl ml-2" />
