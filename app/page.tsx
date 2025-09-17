@@ -1847,14 +1847,6 @@ export default function HomePage() {
               popular: false
             },
             {
-              icon: "fas fa-bolt",
-              title: "موعد طارئ",
-              description: "للحالات العاجلة والطارئة - رد سريع",
-              message: "مرحباً، لدي حالة طارئة وأحتاج موعد عاجل في عيادة ماي دكتور",
-              color: "red",
-              popular: true
-            },
-            {
               icon: "fas fa-user-md",
               title: "استشارة مجانية",
               description: "احصل على استشارة أولية مجانية مع أطبائنا",
