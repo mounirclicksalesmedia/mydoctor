@@ -1060,15 +1060,15 @@ export default function HomePage() {
                 </div>
               </div>
               <div
-                className="absolute top-10 -left-10 bg-white p-3 rounded-full shadow-lg transform scale-75 floating"
+                className="absolute -top-8 -left-10 bg-white p-3 rounded-full shadow-lg transform scale-75 floating"
                 style={{ animationDelay: "0.8s" }}
               >
                 <Image
                   src="/model.jpg"
                   alt="عيادة أسنان"
-                  className="rounded-full w-40 h-40 object-cover"
-                  width={160}
-                  height={160}
+                  className="rounded-full w-56 h-56 object-cover"
+                  width={224}
+                  height={224}
                 />
               </div>
             </div>
@@ -1853,22 +1853,32 @@ export default function HomePage() {
               message: "مرحباً، أريد الحصول على استشارة مجانية من عيادة ماي دكتور",
               color: "green",
               popular: false
+            },
+            {
+              icon: "fas fa-crown",
+              title: "استشارة متخصصة VIP",
+              description: "استشارة شاملة مع كبير الأطباء + خطة علاج مفصلة",
+              message: "مرحباً، أريد استشارة VIP متخصصة مع كبير الأطباء في عيادة ماي دكتور",
+              color: "gold",
+              popular: true
             }
           ].map((booking, index) => (
-            <div key={index} className={`relative bg-white rounded-2xl shadow-lg p-6 transform transition-all duration-300 hover:scale-105 hover:shadow-xl animate-on-scroll stagger-animation ${booking.popular ? 'ring-2 ring-green-400' : ''}`} style={{'--stagger': index + 1} as React.CSSProperties}>
+            <div key={index} className={`relative bg-white rounded-2xl shadow-lg p-6 transform transition-all duration-300 hover:scale-105 hover:shadow-xl animate-on-scroll stagger-animation ${booking.popular ? (booking.color === 'gold' ? 'ring-2 ring-yellow-400' : 'ring-2 ring-green-400') : ''}`} style={{'--stagger': index + 1} as React.CSSProperties}>
               {booking.popular && (
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-green-500 text-white px-4 py-1 rounded-full text-sm font-bold">الأكثر طلباً</span>
+                  <span className={`${booking.color === 'gold' ? 'bg-gradient-to-r from-yellow-500 to-yellow-600' : 'bg-green-500'} text-white px-4 py-1 rounded-full text-sm font-bold`}>الأكثر طلباً</span>
                 </div>
               )}
               
               <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${
                 booking.color === 'blue' ? 'bg-blue-100' :
-                booking.color === 'red' ? 'bg-red-100' : 'bg-green-100'
+                booking.color === 'red' ? 'bg-red-100' : 
+                booking.color === 'gold' ? 'bg-yellow-100' : 'bg-green-100'
               }`}>
                 <i className={`${booking.icon} text-2xl ${
                   booking.color === 'blue' ? 'text-blue-600' :
-                  booking.color === 'red' ? 'text-red-600' : 'text-green-600'
+                  booking.color === 'red' ? 'text-red-600' : 
+                  booking.color === 'gold' ? 'text-yellow-600' : 'text-green-600'
                 }`}></i>
               </div>
               
@@ -1881,7 +1891,8 @@ export default function HomePage() {
                 rel="noopener noreferrer"
                 className={`w-full py-3 px-6 rounded-xl font-bold text-white transition-all duration-300 flex items-center justify-center transform hover:scale-105 ${
                   booking.color === 'blue' ? 'bg-blue-600 hover:bg-blue-700' :
-                  booking.color === 'red' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'
+                  booking.color === 'red' ? 'bg-red-600 hover:bg-red-700' : 
+                  booking.color === 'gold' ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700' : 'bg-green-600 hover:bg-green-700'
                 }`}
                 onClick={handleWhatsAppClick(booking.message)}
               >
