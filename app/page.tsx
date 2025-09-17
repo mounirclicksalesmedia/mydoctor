@@ -15,6 +15,9 @@ declare global {
 
 export default function HomePage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showOfferModal, setShowOfferModal] = useState(false);
+  const [sliderPositions, setSliderPositions] = useState([50, 50, 50]); // Track slider position for each card
+  const [isDraggingCard, setIsDraggingCard] = useState([false, false, false]); // Track dragging state for each card
   const searchParams = useSearchParams();
 
   // WhatsApp utility functions with UTM parameter tracking
@@ -47,6 +50,63 @@ export default function HomePage() {
     return `${base}?${params.join('&')}`;
   }, [searchParams]);
 
+  // Show offer modal after 15 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowOfferModal(true);
+    }, 15000);
+    return () => clearTimeout(timer);
+  }, []);
+
+
+  // Before/After Cases Data
+  const beforeAfterCases = [
+    {
+      id: 1,
+      service: "تقويم الأسنان",
+      beforeImage: "/afterbefore/before1.jpg",
+      afterImage: "/afterbefore/after1.jpg"
+    },
+    {
+      id: 2,
+      service: "ابتسامة هوليوود",
+      beforeImage: "/afterbefore/before2.jpg",
+      afterImage: "/afterbefore/after2.jpg"
+    },
+    {
+      id: 3,
+      service: "زراعة الأسنان",
+      beforeImage: "/afterbefore/before3.jpg",
+      afterImage: "/afterbefore/after3.jpg"
+    }
+  ];
+
+  // Handle slider drag for individual cards
+  const handleSliderMove = (cardIndex: number, e: React.MouseEvent | React.TouchEvent) => {
+    if (!isDraggingCard[cardIndex]) return;
+    
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const x = clientX - rect.left;
+    const percentage = Math.min(Math.max((x / rect.width) * 100, 0), 100);
+    
+    setSliderPositions(prev => 
+      prev.map((pos, index) => index === cardIndex ? percentage : pos)
+    );
+  };
+
+  const handleSliderStart = (cardIndex: number) => {
+    setIsDraggingCard(prev => 
+      prev.map((dragging, index) => index === cardIndex ? true : dragging)
+    );
+  };
+
+  const handleSliderEnd = (cardIndex: number) => {
+    setIsDraggingCard(prev => 
+      prev.map((dragging, index) => index === cardIndex ? false : dragging)
+    );
+  };
+
   const handleWhatsAppClick = (message: string, useDirectLink = false) => (event: React.MouseEvent) => {
     event.preventDefault();
     
@@ -60,6 +120,9 @@ export default function HomePage() {
         click_id: clickId,
         value: 1
       });
+      console.log('✅ Google Analytics WhatsApp click tracked:', clickId);
+    } else {
+      console.log('❌ Google Analytics not available');
     }
     
     // Track for Facebook Pixel if available
@@ -77,31 +140,39 @@ export default function HomePage() {
         click_id: clickId,
         value: 1
       });
+      console.log('✅ Facebook Pixel WhatsApp click tracked:', clickId);
+    } else {
+      console.log('❌ Facebook Pixel not available');
     }
     
+    // Always track Google Ads conversion for WhatsApp clicks
+    if (typeof window !== 'undefined' && window.gtag_report_conversion) {
+      const whatsappUrl = buildWhatsAppUrl(message, clickId);
+      window.gtag_report_conversion(whatsappUrl);
+      console.log('✅ Google Ads conversion tracked:', clickId);
+    } else {
+      console.log('❌ Google Ads conversion tracking not available');
+    }
+
     if (useDirectLink) {
       // Direct link for floating button
       const whatsappUrl = buildWhatsAppUrl(message, clickId);
-      
-      // Track Google Ads conversion and navigate
-      if (typeof window !== 'undefined' && window.gtag_report_conversion) {
-        window.gtag_report_conversion(whatsappUrl);
-      }
-      
       window.location.href = whatsappUrl;
     } else {
       // Use redirect page for enhanced tracking
-      const redirectUrl = `/api/whatsapp-redirect?message=${encodeURIComponent(message)}&click_id=${clickId}`;
+      const currentUrl = new URL(window.location.href);
+      const redirectUrl = `/api/whatsapp-redirect?message=${encodeURIComponent(message)}&click_id=${clickId}&utm_source=${currentUrl.searchParams.get('utm_source') || ''}&utm_campaign=${currentUrl.searchParams.get('utm_campaign') || ''}&utm_medium=${currentUrl.searchParams.get('utm_medium') || ''}&gclid=${currentUrl.searchParams.get('gclid') || ''}&fbclid=${currentUrl.searchParams.get('fbclid') || ''}`;
       
       // Store click data for tracking
       if (typeof window !== 'undefined') {
         localStorage.setItem(`whatsapp_click_${clickId}`, JSON.stringify({
           message,
           timestamp: Date.now(),
-          utm_source: new URLSearchParams(window.location.search).get('utm_source'),
-          utm_campaign: new URLSearchParams(window.location.search).get('utm_campaign'),
-          gclid: new URLSearchParams(window.location.search).get('gclid'),
-          fbclid: new URLSearchParams(window.location.search).get('fbclid')
+          utm_source: currentUrl.searchParams.get('utm_source'),
+          utm_campaign: currentUrl.searchParams.get('utm_campaign'),
+          utm_medium: currentUrl.searchParams.get('utm_medium'),
+          gclid: currentUrl.searchParams.get('gclid'),
+          fbclid: currentUrl.searchParams.get('fbclid')
         }));
       }
       
@@ -149,6 +220,11 @@ export default function HomePage() {
           --accent-color: #18dafb;
           --dark-blue: #005b8f;
           --light-blue: #e6f7ff;
+          --gold: #D4AF37;
+          --gold-light: #F4E5B7;
+          --gold-dark: #B8941F;
+          --luxury-black: #1a1a1a;
+          --luxury-gray: #2d2d2d;
         }
         
         * {
@@ -165,6 +241,130 @@ export default function HomePage() {
         
         .hero-gradient {
           background: linear-gradient(135deg, #00a0e3 0%, #0078bf 100%);
+        }
+        
+        /* Luxury Hero Gradient */
+        .luxury-gradient {
+          background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+          position: relative;
+        }
+        
+        .luxury-gradient::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23D4AF37' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        
+        /* Gold Shimmer Effect */
+        .gold-shimmer {
+          background: linear-gradient(90deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+          background-size: 200% 100%;
+          animation: shimmer 3s linear infinite;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        
+        /* Interactive Before/After Slider */
+        .comparison-slider {
+          position: relative;
+          width: 100%;
+          height: 400px;
+          overflow: hidden;
+          border-radius: 20px;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+          cursor: col-resize;
+        }
+        
+        .comparison-image {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        
+        .comparison-image.after {
+          clip-path: polygon(50% 0, 100% 0, 100% 100%, 50% 100%);
+        }
+        
+        .comparison-slider-line {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          width: 4px;
+          background: var(--gold);
+          left: 50%;
+          transform: translateX(-50%);
+          cursor: col-resize;
+          box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+        
+        .comparison-slider-button {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          background: var(--gold);
+          border: 3px solid white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: col-resize;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        /* Luxury Button */
+        .luxury-button {
+          background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+          color: white;
+          padding: 15px 40px;
+          border-radius: 50px;
+          font-weight: bold;
+          font-size: 18px;
+          border: none;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+          position: relative;
+          overflow: hidden;
+          text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .luxury-button::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+          transition: left 0.5s;
+        }
+        
+        .luxury-button:hover::before {
+          left: 100%;
+        }
+        
+        .luxury-button:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 15px 40px rgba(212, 175, 55, 0.4);
         }
         
         .hero-wave {
@@ -469,15 +669,129 @@ export default function HomePage() {
           right: 20px;
           z-index: 1000;
           background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
-          width: 60px;
-          height: 60px;
+          width: 70px;
+          height: 70px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
+          box-shadow: 0 10px 30px rgba(37, 211, 102, 0.5);
           transition: all 0.3s ease;
           animation: whatsappPulse 2s infinite;
+        }
+        
+        /* Luxury Modal */
+        .luxury-modal {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0,0,0,0.9);
+          z-index: 9999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          animation: fadeIn 0.3s ease;
+        }
+        
+        .luxury-modal-content {
+          background: white;
+          border-radius: 30px;
+          padding: 50px;
+          max-width: 600px;
+          width: 90%;
+          position: relative;
+          border: 3px solid var(--gold);
+          animation: slideUp 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+          from { transform: translateY(50px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        
+        /* Price Tag */
+        .price-tag {
+          position: relative;
+          background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+          color: white;
+          padding: 10px 25px;
+          border-radius: 30px;
+          font-weight: bold;
+          display: inline-block;
+          animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        
+        /* Testimonial Card */
+        .testimonial-luxury {
+          background: white;
+          border-radius: 20px;
+          padding: 30px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+          position: relative;
+          border: 1px solid var(--gold-light);
+          transition: all 0.3s ease;
+        }
+        
+        .testimonial-luxury:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+        
+        .testimonial-luxury::before {
+          content: '"';
+          position: absolute;
+          top: -20px;
+          left: 30px;
+          font-size: 80px;
+          color: var(--gold);
+          opacity: 0.3;
+          font-family: 'Playfair Display', serif;
+        }
+        
+        /* Guarantee Badge */
+        .guarantee-badge {
+          background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+          color: white;
+          padding: 30px;
+          border-radius: 20px;
+          text-align: center;
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .guarantee-badge::after {
+          content: '✓';
+          position: absolute;
+          top: -30px;
+          right: -30px;
+          font-size: 120px;
+          opacity: 0.1;
+        }
+        
+        /* Floating Elements */
+        .floating-badge {
+          position: fixed;
+          bottom: 100px;
+          left: 20px;
+          background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+          color: white;
+          padding: 15px 25px;
+          border-radius: 50px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+          z-index: 999;
+          animation: float 3s ease-in-out infinite;
         }
 
         .floating-whatsapp:hover {
@@ -497,13 +811,46 @@ export default function HomePage() {
           }
         }
 
-        /* Responsive floating button */
+        /* Mobile Responsive */
         @media (max-width: 768px) {
           .floating-whatsapp {
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             bottom: 15px;
             right: 15px;
+          }
+          
+          .comparison-slider {
+            height: 300px;
+          }
+          
+          .luxury-modal-content {
+            padding: 30px 20px;
+            margin: 20px;
+          }
+          
+          .floating-badge {
+            bottom: 80px;
+            left: 10px;
+            padding: 10px 15px;
+            font-size: 14px;
+          }
+          
+          .gold-shimmer {
+            font-size: 0.9em;
+          }
+          
+          .luxury-button {
+            padding: 12px 24px;
+            font-size: 16px;
+          }
+          
+          .hero-gradient h1 {
+            font-size: 2.5rem;
+          }
+          
+          .hero-gradient .grid {
+            gap: 2rem;
           }
         }
         
@@ -581,7 +928,7 @@ export default function HomePage() {
 
       {/* Hero Section */}
   <section className="relative overflow-hidden">
-    <div className="hero-gradient text-white min-h-screen flex items-center">
+    <div className="luxury-gradient text-white min-h-screen flex items-center">
       <div
         className="bubble"
         style={{ width: 100, height: 100, top: "10%", right: "10%" }}
@@ -598,48 +945,59 @@ export default function HomePage() {
         <div className="flex flex-col md:flex-row items-center">
               <div className="w-full md:w-1/2 md:pr-10 mb-10 md:mb-0 animate-on-scroll">
             <div className="relative mb-4">
-              <span className="inline-block bg-white text-blue-600 px-3 py-1 rounded-full text-sm font-bold mb-2">
+              <span className="inline-flex bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-6 py-2 rounded-full text-sm font-bold mb-4 items-center">
+                <i className="fas fa-star ml-2"></i>
                 أفضل عيادة أسنان في الكويت
               </span>
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight">
-              ابتسامة تعكس <span className="text-yellow-300">جمالك</span> وتزيد{" "}
-              <span className="text-yellow-300">ثقتك</span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+              ابتسامة <span className="gold-shimmer">مثالية</span>
+              <span className="block">تدوم مدى الحياة</span>
             </h1>
-            <p className="text-lg md:text-xl opacity-90 mb-8">
-              نقدم لك خدمات طب أسنان متكاملة بأحدث التقنيات وعلى يد أمهر الأطباء
-              لنمنحك ابتسامة مثالية تدوم مدى الحياة
+            <p className="text-xl mb-8 opacity-90 leading-relaxed">
+              نحقق ابتسامة أحلامك بأحدث التقنيات الألمانية والأمريكية
+              <br />
+              نتائج فورية تدوم +15 سنة مع ضمان مدى الحياة
             </p>
-            <div className="flex flex-wrap gap-4 mb-8">
-                  <div className="flex items-center bg-white bg-opacity-20 rounded-lg px-4 py-2 stagger-animation" style={{'--stagger': 1} as React.CSSProperties}>
-                <i className="fas fa-check-circle text-yellow-300 mr-2" />
-                <span>تقنيات حديثة</span>
+            
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                <i className="fas fa-tooth text-yellow-400 text-2xl mb-2"></i>
+                <div className="font-bold">تقنيات متطورة</div>
+                <div className="text-sm opacity-80">أحدث أجهزة العلاج</div>
               </div>
-                  <div className="flex items-center bg-white bg-opacity-20 rounded-lg px-4 py-2 stagger-animation" style={{'--stagger': 2} as React.CSSProperties}>
-                <i className="fas fa-check-circle text-yellow-300 mr-2" />
-                <span>أطباء متخصصون</span>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                <i className="fas fa-user-md text-yellow-400 text-2xl mb-2"></i>
+                <div className="font-bold">أطباء خبراء</div>
+                <div className="text-sm opacity-80">+15 سنة خبرة</div>
               </div>
-                  <div className="flex items-center bg-white bg-opacity-20 rounded-lg px-4 py-2 stagger-animation" style={{'--stagger': 3} as React.CSSProperties}>
-                <i className="fas fa-check-circle text-yellow-300 mr-2" />
-                <span>أسعار تنافسية</span>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                <i className="fas fa-shield-alt text-yellow-400 text-2xl mb-2"></i>
+                <div className="font-bold">ضمان مدى الحياة</div>
+                <div className="text-sm opacity-80">على جميع العلاجات</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                <i className="fas fa-smile text-yellow-400 text-2xl mb-2"></i>
+                <div className="font-bold">+5000 ابتسامة</div>
+                <div className="text-sm opacity-80">نجحنا في تحقيقها</div>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
-                    href={buildWhatsAppUrl("مرحباً، أريد حجز موعد في عيادة ماي دكتور لطب الأسنان")}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-primary text-white font-bold py-3 px-8 rounded-full text-center flex items-center justify-center"
-                    onClick={handleWhatsAppClick("مرحباً، أريد حجز موعد في عيادة ماي دكتور لطب الأسنان")}
-                  >
-                    <i className="fab fa-whatsapp text-xl ml-2" />
-                    احجز موعدك عبر واتساب
+                href={buildWhatsAppUrl("مرحباً، أريد الحصول على استشارة مجانية في عيادة ماي دكتور")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="luxury-button flex items-center justify-center"
+                onClick={handleWhatsAppClick("مرحباً، أريد الحصول على استشارة مجانية في عيادة ماي دكتور")}
+              >
+                <i className="fab fa-whatsapp text-2xl ml-2" />
+                احصل على استشارة مجانية الآن
               </a>
               <a
-                href="#services"
-                className="btn-outline text-white font-bold py-3 px-8 rounded-full text-center flex items-center justify-center"
+                href="#before-after"
+                className="bg-transparent border-2 border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black transition-all duration-300 px-8 py-4 rounded-full font-bold text-center flex items-center justify-center"
               >
-                خدماتنا <i className="fas fa-arrow-left mr-2" />
+                شاهد النتائج <i className="fas fa-arrow-left mr-2" />
               </a>
             </div>
             <div className="mt-8 flex items-center">
@@ -733,6 +1091,118 @@ export default function HomePage() {
     </div>
   </section>
 
+  {/* Before/After Transformations */}
+  <section id="before-after" className="py-20 bg-gray-50">
+    <div className="container mx-auto px-4">
+      <div className="text-center mb-16 animate-on-scroll">
+        <span className="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-6 py-2 rounded-full text-sm font-bold mb-4">
+          نتائج حقيقية 100%
+        </span>
+        <h2 className="text-4xl md:text-5xl font-bold mb-4">
+          شاهد <span className="gold-shimmer">التحول المذهل</span>
+        </h2>
+        <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          تحولات حقيقية لمرضانا - قبل وبعد العلاج في عيادة ماي دكتور
+        </p>
+      </div>
+      
+      {/* Before/After Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+        {beforeAfterCases.map((case_, index) => (
+          <div key={case_.id} className="bg-white rounded-2xl shadow-lg overflow-hidden animate-on-scroll stagger-animation" style={{'--stagger': index + 1} as React.CSSProperties}>
+            {/* Draggable Before/After Slider */}
+            <div 
+              className="relative h-64 overflow-hidden cursor-col-resize"
+              onMouseMove={(e) => handleSliderMove(index, e)}
+              onTouchMove={(e) => handleSliderMove(index, e)}
+              onMouseDown={() => handleSliderStart(index)}
+              onTouchStart={() => handleSliderStart(index)}
+              onMouseUp={() => handleSliderEnd(index)}
+              onTouchEnd={() => handleSliderEnd(index)}
+              onMouseLeave={() => handleSliderEnd(index)}
+            >
+              {/* Before Image (Background) */}
+              <Image 
+                src={case_.beforeImage}
+                alt={`Before - ${case_.service}`}
+                className="absolute inset-0 w-full h-full object-cover"
+                width={400}
+                height={300}
+                quality={90}
+              />
+              
+              {/* After Image (Clipped) */}
+              <Image 
+                src={case_.afterImage}
+                alt={`After - ${case_.service}`}
+                className="absolute inset-0 w-full h-full object-cover"
+                width={400}
+                height={300}
+                quality={90}
+                style={{ 
+                  clipPath: `polygon(${sliderPositions[index]}% 0, 100% 0, 100% 100%, ${sliderPositions[index]}% 100%)` 
+                }}
+              />
+              
+              {/* Slider Line */}
+              <div 
+                className="absolute top-0 bottom-0 w-1 bg-white shadow-lg z-10"
+                style={{ left: `${sliderPositions[index]}%` }}
+              >
+                {/* Slider Handle */}
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-xl border-4 border-yellow-400 flex items-center justify-center cursor-col-resize">
+                  <i className="fas fa-arrows-alt-h text-gray-700 text-sm"></i>
+                </div>
+              </div>
+              
+              {/* Labels */}
+              <div className="absolute top-4 left-4 bg-black/70 text-white px-3 py-1 rounded-full font-bold text-sm">
+                قبل
+              </div>
+              <div className="absolute top-4 right-4 bg-yellow-400 text-black px-3 py-1 rounded-full font-bold text-sm">
+                بعد
+              </div>
+              
+              {/* Drag Instruction */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white/90 text-gray-800 px-4 py-2 rounded-full font-bold text-xs shadow-lg">
+                <i className="fas fa-hand-paper ml-1"></i>
+                اسحب للمقارنة
+              </div>
+            </div>
+            
+            {/* Service Info */}
+            <div className="p-6 text-center">
+              <h3 className="text-xl font-bold text-gray-800 mb-4">{case_.service}</h3>
+              <a
+                href={buildWhatsAppUrl(`مرحباً، شاهدت نتائج ${case_.service} وأريد الحصول على نفس النتيجة`)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="luxury-button inline-flex items-center"
+                onClick={handleWhatsAppClick(`مرحباً، شاهدت نتائج ${case_.service} وأريد الحصول على نفس النتيجة`)}
+              >
+                <i className="fab fa-whatsapp text-lg ml-2" />
+                استشارة مجانية
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      <div className="text-center">
+        <a
+          href={buildWhatsAppUrl("مرحباً، شاهدت النتائج وأريد الحصول على نفس النتيجة")}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="luxury-button inline-flex items-center"
+          onClick={handleWhatsAppClick("مرحباً، شاهدت النتائج وأريد الحصول على نفس النتيجة")}
+        >
+          <i className="fab fa-whatsapp text-2xl ml-2" />
+          أريد نفس النتيجة
+        </a>
+      </div>
+    </div>
+  </section>
+
   {/* Services Section */}
   <section id="services" className="py-16 bg-white relative">
     <div className="tooth-parallax" style={{ top: "10%", right: "5%" }}>
@@ -790,25 +1260,33 @@ export default function HomePage() {
                 description: "رعاية خاصة لأسنان الأطفال في بيئة مريحة وودية مع تقنيات مخصصة لضمان تجربة إيجابية.",
                 whatsappText: "مرحباً، أريد معرفة المزيد عن خدمة طب أسنان الأطفال"
               }
-            ].map((service, index) => (
-              <div key={index} className="service-card bg-white rounded-xl shadow-md overflow-hidden p-6 animate-on-scroll stagger-animation" style={{'--stagger': index + 1} as React.CSSProperties}>
-          <div className="mb-4">
-                  <i className={`${service.icon} service-icon text-4xl text-blue-600`} />
+                ].map((service, index) => (
+              <div key={index} className="service-card bg-white rounded-xl shadow-lg overflow-hidden p-8 animate-on-scroll stagger-animation hover:shadow-2xl transition-all duration-300 border border-gray-100" style={{'--stagger': index + 1} as React.CSSProperties}>
+          <div className="mb-6">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mb-4">
+                    <i className={`${service.icon} text-2xl text-white`} />
+                  </div>
           </div>
-                <h3 className="text-xl font-bold mb-2">{service.title}</h3>
-          <p className="text-gray-600 mb-4">
+                <h3 className="text-2xl font-bold mb-3 text-gray-800">{service.title}</h3>
+          <p className="text-gray-600 mb-6 leading-relaxed">
                   {service.description}
                 </p>
-                <a 
-                  href={buildWhatsAppUrl(service.whatsappText)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 font-medium flex items-center transition duration-300 hover:text-blue-800"
-                  onClick={handleWhatsAppClick(service.whatsappText)}
-                >
-                  <i className="fab fa-whatsapp text-lg ml-1" />
-                  اسأل عبر واتساب
-          </a>
+                <div className="flex items-center justify-between">
+                  <a 
+                    href={buildWhatsAppUrl(service.whatsappText)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="luxury-button text-sm px-6 py-3"
+                    onClick={handleWhatsAppClick(service.whatsappText)}
+                  >
+                    <i className="fab fa-whatsapp text-lg ml-1" />
+                    استشارة مجانية
+                  </a>
+                  <span className="text-sm text-gray-500 bg-gray-50 px-3 py-1 rounded-full">
+                    <i className="fas fa-clock ml-1"></i>
+                    متاح الآن
+                  </span>
+                </div>
         </div>
             ))}
           </div>
@@ -837,6 +1315,125 @@ export default function HomePage() {
           className="shape-fill"
         />
       </svg>
+    </div>
+  </section>
+
+  {/* Pricing Packages Section */}
+  <section id="packages" className="py-20 luxury-gradient text-white">
+    <div className="container mx-auto px-4">
+      <div className="text-center mb-16 animate-on-scroll">
+        <span className="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-6 py-2 rounded-full text-sm font-bold mb-4">
+          خدماتنا المتميزة
+        </span>
+        <h2 className="text-4xl md:text-5xl font-bold mb-4">
+          اختر <span className="gold-shimmer">الخدمة المناسبة</span>
+        </h2>
+        <p className="text-xl opacity-90 max-w-3xl mx-auto">
+          خدمات شاملة بأعلى معايير الجودة - تقسيط مريح متاح
+        </p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {[
+          {
+            name: "الخدمات الأساسية",
+            description: "للعلاجات الأساسية",
+            features: [
+              "فحص شامل مجاني",
+              "تنظيف الأسنان",
+              "حشوات تجميلية",
+              "استشارة مجانية",
+              "ضمان سنة واحدة"
+            ],
+            popular: false,
+            whatsappText: "مرحباً، أريد معرفة المزيد عن الخدمات الأساسية"
+          },
+          {
+            name: "الخدمات المتقدمة",
+            description: "الأكثر طلباً",
+            features: [
+              "فحص شامل + أشعة",
+              "تنظيف عميق",
+              "تبييض الأسنان",
+              "حشوات متعددة",
+              "علاج جذور الأسنان",
+              "ضمان 3 سنوات",
+              "متابعة مجانية"
+            ],
+            popular: true,
+            whatsappText: "مرحباً، أريد معرفة المزيد عن الخدمات المتقدمة"
+          },
+          {
+            name: "الخدمات الشاملة",
+            description: "العلاج المتكامل",
+            features: [
+              "فحص شامل + أشعة 3D",
+              "تنظيف + تبييض متقدم",
+              "ابتسامة هوليوود",
+              "علاج جذور متعدد",
+              "تركيبات خزفية",
+              "ضمان 5 سنوات",
+              "متابعة مدى الحياة",
+              "خدمات طوارئ مجانية"
+            ],
+            popular: false,
+            whatsappText: "مرحباً، أريد معرفة المزيد عن الخدمات الشاملة"
+          }
+        ].map((pkg, index) => (
+          <div key={index} className={`relative bg-gradient-to-b from-gray-900 to-black rounded-3xl p-8 border ${pkg.popular ? 'border-yellow-400' : 'border-gray-700'} hover:transform hover:scale-105 transition-all duration-300 animate-on-scroll`}>
+            {pkg.popular && (
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <span className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-6 py-2 rounded-full text-sm font-bold">
+                  الأكثر طلباً
+                </span>
+              </div>
+            )}
+            
+            <div className="text-center mb-8">
+              <h3 className="text-2xl font-bold mb-2 gold-shimmer">{pkg.name}</h3>
+              <p className="text-gray-400">{pkg.description}</p>
+            </div>
+            
+            <ul className="space-y-3 mb-8">
+              {pkg.features.map((feature, fIndex) => (
+                <li key={fIndex} className="flex items-start">
+                  <i className="fas fa-check-circle text-yellow-400 ml-3 mt-1"></i>
+                  <span className="text-gray-300">{feature}</span>
+                </li>
+              ))}
+            </ul>
+            
+            <a
+              href={buildWhatsAppUrl(pkg.whatsappText)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`w-full py-4 rounded-full font-bold transition-all duration-300 flex items-center justify-center ${
+                pkg.popular 
+                  ? 'luxury-button' 
+                  : 'bg-gray-800 hover:bg-gray-700 text-white'
+              }`}
+              onClick={handleWhatsAppClick(pkg.whatsappText)}
+            >
+              <i className="fab fa-whatsapp text-xl ml-2" />
+              استشارة مجانية
+            </a>
+          </div>
+        ))}
+      </div>
+      
+      <div className="mt-12 text-center">
+        <p className="text-gray-400 mb-4">أو</p>
+        <a
+          href={buildWhatsAppUrl("مرحباً، أريد خطة علاج مخصصة حسب حالتي")}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center text-yellow-400 hover:text-yellow-300 transition"
+          onClick={handleWhatsAppClick("مرحباً، أريد خطة علاج مخصصة حسب حالتي")}
+        >
+          <i className="fas fa-comments ml-2"></i>
+          احصل على خطة مخصصة
+        </a>
+      </div>
     </div>
   </section>
 
@@ -1020,6 +1617,131 @@ export default function HomePage() {
               اسأل عبر واتساب
             </a>
           </div>
+    </div>
+  </section>
+
+  {/* Guarantee Section */}
+  <section id="guarantee" className="py-20 bg-gray-50">
+    <div className="container mx-auto px-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="guarantee-badge animate-on-scroll">
+          <div className="text-center">
+            <i className="fas fa-shield-alt text-6xl mb-4"></i>
+            <h2 className="text-3xl font-bold mb-4">ضمان الرضا 100%</h2>
+            <p className="text-xl mb-8">
+              نضمن لك النتيجة أو استرجاع كامل المبلغ
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-white">
+              <div>
+                <i className="fas fa-certificate text-4xl mb-3"></i>
+                <h4 className="font-bold mb-2">ضمان 15 سنة</h4>
+                <p className="text-sm opacity-90">على جميع التركيبات والعلاجات</p>
+              </div>
+              <div>
+                <i className="fas fa-undo text-4xl mb-3"></i>
+                <h4 className="font-bold mb-2">ضمان الاسترجاع</h4>
+                <p className="text-sm opacity-90">خلال 30 يوم إذا لم تعجبك النتيجة</p>
+              </div>
+              <div>
+                <i className="fas fa-user-md text-4xl mb-3"></i>
+                <h4 className="font-bold mb-2">متابعة مجانية</h4>
+                <p className="text-sm opacity-90">فحوصات دورية مجانية لمدة سنتين</p>
+              </div>
+            </div>
+            
+            <div className="mt-8">
+              <a
+                href={buildWhatsAppUrl("مرحباً، أريد معرفة المزيد عن الضمانات المقدمة")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white text-green-600 hover:bg-gray-100 transition-all duration-300 px-8 py-4 rounded-full font-bold inline-flex items-center"
+                onClick={handleWhatsAppClick("مرحباً، أريد معرفة المزيد عن الضمانات المقدمة")}
+              >
+                <i className="fab fa-whatsapp text-xl ml-2" />
+                تحدث مع خبير الآن
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* Process Timeline */}
+  <section id="process" className="py-20 bg-white">
+    <div className="container mx-auto px-4">
+      <div className="text-center mb-16 animate-on-scroll">
+        <span className="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-6 py-2 rounded-full text-sm font-bold mb-4">
+          خطوات بسيطة
+        </span>
+        <h2 className="text-4xl md:text-5xl font-bold mb-4">
+          رحلتك نحو <span className="gold-shimmer">الابتسامة المثالية</span>
+        </h2>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {[
+          {
+            step: 1,
+            icon: "fas fa-comments",
+            title: "الاستشارة المجانية",
+            description: "فحص شامل وتشخيص دقيق لحالتك مع وضع خطة العلاج المناسبة",
+            duration: "30 دقيقة"
+          },
+          {
+            step: 2,
+            icon: "fas fa-x-ray",
+            title: "التشخيص المتقدم",
+            description: "أشعة رقمية وفحوصات متقدمة لضمان دقة التشخيص",
+            duration: "15 دقيقة"
+          },
+          {
+            step: 3,
+            icon: "fas fa-tools",
+            title: "بدء العلاج",
+            description: "تنفيذ خطة العلاج بأحدث التقنيات وأعلى معايير الجودة",
+            duration: "حسب الحالة"
+          },
+          {
+            step: 4,
+            icon: "fas fa-smile",
+            title: "النتيجة النهائية",
+            description: "الحصول على ابتسامتك المثالية مع المتابعة الدورية",
+            duration: "مدى الحياة"
+          }
+        ].map((process, index) => (
+          <div key={index} className="text-center animate-on-scroll">
+            <div className="relative mb-6">
+              <div className="w-20 h-20 mx-auto bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center text-white text-3xl shadow-lg">
+                <i className={process.icon}></i>
+              </div>
+              <div className="absolute -top-2 -right-2 w-8 h-8 bg-black text-white rounded-full flex items-center justify-center font-bold">
+                {process.step}
+              </div>
+            </div>
+            <h3 className="text-xl font-bold mb-2">{process.title}</h3>
+            <p className="text-gray-600 mb-2 leading-relaxed">{process.description}</p>
+            <span className="inline-block bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
+              <i className="fas fa-clock ml-1"></i>
+              {process.duration}
+            </span>
+          </div>
+        ))}
+      </div>
+      
+      <div className="text-center mt-12">
+        <a
+          href={buildWhatsAppUrl("مرحباً، أريد البدء برحلتي نحو الابتسامة المثالية")}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="luxury-button inline-flex items-center"
+          onClick={handleWhatsAppClick("مرحباً، أريد البدء برحلتي نحو الابتسامة المثالية")}
+        >
+          <i className="fab fa-whatsapp text-2xl ml-2" />
+          ابدأ رحلتك الآن
+        </a>
+      </div>
     </div>
   </section>
 
@@ -1385,6 +2107,13 @@ export default function HomePage() {
   </footer>
 
       {/* Floating WhatsApp Button */}
+      {/* Floating Badge */}
+      <div className="floating-badge">
+        <i className="fas fa-phone ml-2"></i>
+        استشارة مجانية
+      </div>
+
+      {/* WhatsApp Floating Button */}
       <a
         href={buildWhatsAppUrl("مرحباً، أريد الاستفسار عن خدمات عيادة ماي دكتور لطب الأسنان")}
         target="_blank"
@@ -1393,8 +2122,64 @@ export default function HomePage() {
         title="تواصل معنا عبر واتساب"
         onClick={handleWhatsAppClick("مرحباً، أريد الاستفسار عن خدمات عيادة ماي دكتور لطب الأسنان")}
       >
-        <i className="fab fa-whatsapp text-white text-2xl" />
+        <i className="fab fa-whatsapp text-white text-3xl" />
       </a>
+
+      {/* Limited Time Offer Modal */}
+      {showOfferModal && (
+        <div className="luxury-modal" onClick={() => setShowOfferModal(false)}>
+          <div className="luxury-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              onClick={() => setShowOfferModal(false)}
+            >
+              <i className="fas fa-times text-2xl"></i>
+            </button>
+
+            <div className="text-center">
+              <div className="w-24 h-24 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i className="fas fa-crown text-white text-4xl"></i>
+              </div>
+
+              <h3 className="text-3xl font-bold mb-4">استشارة مجانية!</h3>
+              <p className="text-gray-600 mb-6 text-lg">
+                احصل على <strong>استشارة مجانية شاملة</strong> مع أفضل أطباء الأسنان في الكويت
+              </p>
+
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="text-center">
+                  <i className="fas fa-teeth text-3xl text-yellow-500 mb-2"></i>
+                  <p className="text-sm">جميع التخصصات</p>
+                </div>
+                <div className="text-center">
+                  <i className="fas fa-user-md text-3xl text-green-500 mb-2"></i>
+                  <p className="text-sm">أطباء خبراء</p>
+                </div>
+                <div className="text-center">
+                  <i className="fas fa-shield-alt text-3xl text-blue-500 mb-2"></i>
+                  <p className="text-sm">ضمان 15 سنة</p>
+                </div>
+              </div>
+
+              <a
+                href={buildWhatsAppUrl("مرحباً، أريد الحصول على استشارة مجانية شاملة")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="luxury-button w-full flex items-center justify-center"
+                onClick={handleWhatsAppClick("مرحباً، أريد الحصول على استشارة مجانية شاملة")}
+              >
+                <i className="fab fa-whatsapp text-2xl ml-2"></i>
+                احجز استشارتك المجانية
+              </a>
+
+              <p className="text-gray-500 text-sm mt-4">
+                <i className="fas fa-lock ml-1"></i>
+                معلوماتك آمنة ومحمية 100%
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

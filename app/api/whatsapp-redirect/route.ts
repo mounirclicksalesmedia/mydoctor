@@ -133,6 +133,11 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Track conversion immediately when page loads
+    if (typeof gtag_report_conversion !== 'undefined') {
+      gtag_report_conversion('${whatsappUrl.toString()}');
+    }
+
     // Redirect after 2 seconds
     setTimeout(() => {
       // Track the actual redirect
@@ -185,9 +190,9 @@ export async function GET(request: NextRequest) {
           });
         }
         
-        // Send conversion event
-        if (typeof gtag_report_conversion !== 'undefined') {
-          gtag_report_conversion();
+        // Send conversion event for WhatsApp message sent
+        if (typeof gtag_report_whatsapp_message_conversion !== 'undefined') {
+          gtag_report_whatsapp_message_conversion();
         }
         
         // Facebook conversion
@@ -215,13 +220,59 @@ export async function GET(request: NextRequest) {
     }, 10000);
   </script>
 
-  <!-- Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=YOUR_GA_ID"></script>
+  <!-- Google Analytics & Ads -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17138098917"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', 'YOUR_GA_ID');
+    gtag('config', 'AW-17138098917');
+    
+    // Conversion tracking function
+    function gtag_report_conversion(url, userData = {}) {
+      var callback = function () {
+        if (typeof(url) != 'undefined') {
+          window.location = url;
+        }
+      };
+      
+      var conversionData = {
+        'send_to': 'AW-17138098917/IROQCIic9dgaEOXFiuw_',
+        'event_callback': callback
+      };
+      
+      if (userData.email || userData.phone_number) {
+        conversionData.user_data = {};
+        if (userData.email) conversionData.user_data.email_address = userData.email;
+        if (userData.phone_number) conversionData.user_data.phone_number = userData.phone_number;
+      }
+      
+      gtag('event', 'conversion', conversionData);
+      return false;
+    }
+
+    // WhatsApp message conversion tracking
+    function gtag_report_whatsapp_message_conversion(url, userData = {}) {
+      var callback = function () {
+        if (typeof(url) != 'undefined') {
+          window.location = url;
+        }
+      };
+      
+      var conversionData = {
+        'send_to': 'AW-17138098917/c5lQCPSLiJsbEOXFiuw_',
+        'event_callback': callback
+      };
+      
+      if (userData.email || userData.phone_number) {
+        conversionData.user_data = {};
+        if (userData.email) conversionData.user_data.email_address = userData.email;
+        if (userData.phone_number) conversionData.user_data.phone_number = userData.phone_number;
+      }
+      
+      gtag('event', 'conversion', conversionData);
+      return false;
+    }
   </script>
 
   <!-- Facebook Pixel -->
@@ -234,7 +285,7 @@ export async function GET(request: NextRequest) {
     t.src=v;s=b.getElementsByTagName(e)[0];
     s.parentNode.insertBefore(t,s)}(window, document,'script',
     'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', 'YOUR_PIXEL_ID');
+    fbq('init', '1372446060652479');
     fbq('track', 'PageView');
   </script>
 </body>

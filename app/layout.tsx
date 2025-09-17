@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cairo } from 'next/font/google';
 import { Suspense } from 'react';
+import Image from 'next/image';
 
 const cairo = Cairo({
   subsets: ['arabic'],
@@ -38,16 +39,61 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              function gtag_report_conversion(url) {
+              function gtag_report_conversion(url, userData = {}) {
                 var callback = function () {
                   if (typeof(url) != 'undefined') {
                     window.location = url;
                   }
                 };
-                gtag('event', 'conversion', {
-                    'send_to': 'AW-17138098917/IROQCIic9dgaEOXFiuw_',
-                    'event_callback': callback
-                });
+                
+                // Enhanced conversions data
+                var conversionData = {
+                  'send_to': 'AW-17138098917/IROQCIic9dgaEOXFiuw_',
+                  'event_callback': callback
+                };
+                
+                // Add user data if available for enhanced conversions
+                if (userData.email || userData.phone_number) {
+                  conversionData.user_data = {};
+                  if (userData.email) conversionData.user_data.email_address = userData.email;
+                  if (userData.phone_number) conversionData.user_data.phone_number = userData.phone_number;
+                  if (userData.first_name) conversionData.user_data.first_name = userData.first_name;
+                  if (userData.last_name) conversionData.user_data.last_name = userData.last_name;
+                }
+                
+                gtag('event', 'conversion', conversionData);
+                return false;
+              }
+            `,
+          }}
+        />
+        {/* Event snippet for SentWhatsappMessage conversion tracking */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              function gtag_report_whatsapp_message_conversion(url, userData = {}) {
+                var callback = function () {
+                  if (typeof(url) != 'undefined') {
+                    window.location = url;
+                  }
+                };
+                
+                // Enhanced conversions data
+                var conversionData = {
+                  'send_to': 'AW-17138098917/c5lQCPSLiJsbEOXFiuw_',
+                  'event_callback': callback
+                };
+                
+                // Add user data if available for enhanced conversions
+                if (userData.email || userData.phone_number) {
+                  conversionData.user_data = {};
+                  if (userData.email) conversionData.user_data.email_address = userData.email;
+                  if (userData.phone_number) conversionData.user_data.phone_number = userData.phone_number;
+                  if (userData.first_name) conversionData.user_data.first_name = userData.first_name;
+                  if (userData.last_name) conversionData.user_data.last_name = userData.last_name;
+                }
+                
+                gtag('event', 'conversion', conversionData);
                 return false;
               }
             `,
@@ -71,8 +117,12 @@ export default function RootLayout({
           }}
         />
         <noscript>
-          <img height="1" width="1" style={{display: 'none'}}
+          <Image 
+            height={1} 
+            width={1} 
+            style={{display: 'none'}}
             src="https://www.facebook.com/tr?id=1372446060652479&ev=PageView&noscript=1"
+            alt=""
           />
         </noscript>
         {/* End Meta Pixel Code */}
