@@ -1064,11 +1064,11 @@ export default function HomePage() {
                 style={{ animationDelay: "0.8s" }}
               >
                 <Image
-                  src="https://mdckuwait.com/wp-content/uploads/2019/03/values-1-400x250.jpg"
+                  src="/model.jpg"
                   alt="عيادة أسنان"
-                  className="rounded-full w-32 h-32 object-cover"
-                  width={128}
-                  height={128}
+                  className="rounded-full w-40 h-40 object-cover"
+                  width={160}
+                  height={160}
                 />
               </div>
             </div>
